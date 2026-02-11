@@ -1,10 +1,19 @@
-    <video
-        id="join-background-video"
-        autoplay
-        loop
-        muted
-        playsinline
-        src="{{world.background}}"
-        onerror="this.remove()"
-        style="position: fixed; inset: 0; width: 100vw; height: 100vh; object-fit: cover; z-index: -1; pointer-events: none;"
-    ></video>
+    <script>
+    (() => {
+      const id = "join-background-video";
+      const src = "{{world.background}}";
+      let video = document.getElementById(id);
+      if (!video) {
+        video = document.createElement("video");
+        video.id = id;
+        video.autoplay = true;
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.onerror = () => video.remove();
+        video.style.cssText = "position: fixed; inset: 0; width: 100vw; height: 100vh; object-fit: cover; z-index: -100; pointer-events: none;";
+        document.body.prepend(video);
+      }
+      video.src = src;
+    })();
+    </script>

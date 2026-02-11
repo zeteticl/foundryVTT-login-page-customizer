@@ -48,6 +48,8 @@ const askChoice = async (question, choices, defaultIndex = 0) => {
   }
 };
 
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const readIfExists = async (filePath) => {
   try {
     return await fs.readFile(filePath, "utf8");
@@ -159,8 +161,21 @@ const loadProfile = async (versionTag) => {
 };
 
 const injectBlockAfterFormTag = (content, marker, blockText) => {
-  if (content.includes(marker)) return content;
-  const wrapped = `\n    {{!-- ${marker} --}}\n${blockText}`;
+  const markerComment = `{{!-- ${marker} --}}`;
+  const wrapped = `\n    ${markerComment}\n${blockText}`;
+
+  // Allow upgrading previously injected video block.
+  if (content.includes(markerComment)) {
+    if (marker.includes("video background")) {
+      const markerRegex = escapeRegExp(markerComment);
+      const replaceRegex = new RegExp(`\\s*${markerRegex}\\s*<video[\\s\\S]*?<\\/video>`, "m");
+      if (replaceRegex.test(content)) {
+        return content.replace(replaceRegex, wrapped);
+      }
+    }
+    return content;
+  }
+
   return content.replace(/<form[^>]*>/, (match) => `${match}${wrapped}`);
 };
 
@@ -196,7 +211,24 @@ const patchBaseWorldForVideo = (content, rule) => {
   let updated = content;
   updated = updated.replace(rule.backgroundCategoriesFrom, rule.backgroundCategoriesTo);
   updated = updated.replace(rule.backgroundValidationFrom, rule.backgroundValidationTo);
+
+  // Fallback tolerant replacement for builds with formatting differences.
+  updated = updated.replace(
+    /background:\s*new\s+((?:fields\.)?FilePathField)\s*\(\s*\{\s*categories:\s*\[\s*"IMAGE"\s*\]/g,
+    'background: new $1({categories: ["IMAGE", "VIDEO"]'
+  );
+  updated = updated.replace(
+    /if\s*\(\s*\(typeof\s+data\.background\s*===\s*"string"\)\s*&&\s*!hasFileExtension\(\s*data\.background\s*,\s*Object\.keys\(\s*FILE_CATEGORIES\.IMAGE\s*\)\s*\)\s*\)\s*\{/g,
+    'if ( (typeof data.background === "string") && !(hasFileExtension(data.background, Object.keys(FILE_CATEGORIES.IMAGE)) || hasFileExtension(data.background, Object.keys(FILE_CATEGORIES.VIDEO))) ) {'
+  );
+
   return { content: updated, changed: updated !== content };
+};
+
+const hasVideoValidationSupport = (content) => {
+  const categoriesOk = /categories:\s*\[\s*"IMAGE"\s*,\s*"VIDEO"\s*\]/.test(content);
+  const validationOk = /FILE_CATEGORIES\.VIDEO/.test(content);
+  return categoriesOk && validationOk;
 };
 
 const getBackupCandidatesForFile = async (filePath) => {
@@ -244,9 +276,10 @@ const collectBackupTags = async (appRoot, relativePaths) => {
     }
   }
 
+  const byTagDesc = (a, b) => b.tag.localeCompare(a.tag);
   return Array.from(tagMap.values())
     .map((t) => ({ ...t, files: Array.from(t.files).sort() }))
-    .sort((a, b) => b.newest - a.newest);
+    .sort((a, b) => byTagDesc(a, b) || (b.newest - a.newest));
 };
 
 const restoreFromBackupTag = async (appRoot, relativePaths, tag) => {
@@ -322,8 +355,9 @@ const main = async () => {
     profile.files.joinSetup,
     profile.files.joinWorld,
     profile.files.joinDetails,
-    profile.files.baseWorld
-  ];
+    profile.files.baseWorld,
+    profile.files.foundryBundle
+  ].filter(Boolean);
 
   if (isRestoreMode) {
     const tags = await collectBackupTags(appRoot, targetRelativePaths);
@@ -428,6 +462,23 @@ const main = async () => {
 
   if (supportVideo) {
     await patchFile(profile.files.baseWorld, (before) => patchBaseWorldForVideo(before, profile.baseWorldVideoPatch));
+    if (profile.files.foundryBundle) {
+      await patchFile(profile.files.foundryBundle, (before) => patchBaseWorldForVideo(before, profile.baseWorldVideoPatch));
+    }
+
+    const baseWorldPath = path.join(appRoot, profile.files.baseWorld);
+    const baseWorldText = await readIfExists(baseWorldPath);
+    if (!baseWorldText || !hasVideoValidationSupport(baseWorldText)) {
+      warnings.push(`Video validation patch not fully applied / 影片驗證補丁未完整套用: ${profile.files.baseWorld}`);
+    }
+
+    if (profile.files.foundryBundle) {
+      const foundryPath = path.join(appRoot, profile.files.foundryBundle);
+      const foundryText = await readIfExists(foundryPath);
+      if (!foundryText || !hasVideoValidationSupport(foundryText)) {
+        warnings.push(`Video validation patch not fully applied / 影片驗證補丁未完整套用: ${profile.files.foundryBundle}`);
+      }
+    }
   }
 
   if (hideWorld) {

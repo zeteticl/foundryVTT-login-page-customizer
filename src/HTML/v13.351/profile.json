@@ -9,7 +9,8 @@
     "joinSetup": "templates/setup/parts/join-setup.hbs",
     "joinWorld": "templates/setup/parts/join-world.hbs",
     "joinDetails": "templates/setup/parts/join-details.hbs",
-    "baseWorld": "common/packages/base-world.mjs"
+    "baseWorld": "common/packages/base-world.mjs",
+    "foundryBundle": "public/scripts/foundry.mjs"
   },
   "snippets": {
     "videoBlock": "snippets/join-form.video.hbs",
