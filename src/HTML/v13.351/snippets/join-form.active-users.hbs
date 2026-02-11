@@ -1,5 +1,4 @@
 {{#each users}}
-                {{#if this.active}}
-                <option value="{{this.id}}">{{this.name}}</option>
-                {{/if}}
-                {{/each}}
+                    {{#if this.role}} 
+                        <option value="{{this.id}}"  {{#if this.active}}disabled{{/if}}>{{this.name}}</option>
+                     {{/if}}   {{/each}}
