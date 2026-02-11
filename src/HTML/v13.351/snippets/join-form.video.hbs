@@ -1,19 +1,29 @@
-    <script>
-    (() => {
-      const id = "join-background-video";
-      const src = "{{world.background}}";
-      let video = document.getElementById(id);
-      if (!video) {
-        video = document.createElement("video");
-        video.id = id;
-        video.autoplay = true;
-        video.loop = true;
-        video.muted = true;
-        video.playsInline = true;
-        video.onerror = () => video.remove();
-        video.style.cssText = "position: fixed; inset: 0; width: 100vw; height: 100vh; object-fit: cover; z-index: -100; pointer-events: none;";
-        document.body.prepend(video);
+    <style>
+      body.join #main-background {
+        display: none !important;
       }
-      video.src = src;
-    })();
-    </script>
+      body.join #join-game {
+        position: relative;
+        z-index: 1;
+      }
+      body.join #join-background-video {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+        z-index: -1;
+        pointer-events: none;
+        background: #000;
+      }
+    </style>
+    <video
+      id="join-background-video"
+      autoplay
+      loop
+      muted
+      playsinline
+      preload="auto"
+      src="{{world.background}}"
+      onerror="this.style.display='none';"
+    ></video>

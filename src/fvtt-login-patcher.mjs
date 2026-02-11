@@ -160,23 +160,74 @@ const loadProfile = async (versionTag) => {
   return { profileDir, profile, snippets };
 };
 
-const injectBlockAfterFormTag = (content, marker, blockText) => {
+const replaceExistingMarkedBlock = (content, marker, replacement) => {
   const markerComment = `{{!-- ${marker} --}}`;
-  const wrapped = `\n    ${markerComment}\n${blockText}`;
+  const wrapped = `\n    ${markerComment}\n${replacement}`;
 
-  // Allow upgrading previously injected video block.
   if (content.includes(markerComment)) {
-    if (marker.includes("video background")) {
-      const markerRegex = escapeRegExp(markerComment);
-      const replaceRegex = new RegExp(`\\s*${markerRegex}\\s*<video[\\s\\S]*?<\\/video>`, "m");
-      if (replaceRegex.test(content)) {
-        return content.replace(replaceRegex, wrapped);
-      }
-    }
-    return content;
+    const markerRegex = escapeRegExp(markerComment);
+    // Replace marker + style/video/script block in both legacy and current formats.
+    const replaceRichRegex = new RegExp(
+      `\\s*${markerRegex}\\s*(?:<style>[\\s\\S]*?<\\/style>\\s*)?(?:<video[\\s\\S]*?<\\/video>|<script>[\\s\\S]*?<\\/script>)`,
+      "m"
+    );
+    if (replaceRichRegex.test(content)) return content.replace(replaceRichRegex, wrapped);
+    // Fallback: replace just marker line.
+    const replaceMarkerOnly = new RegExp(`\\s*${markerRegex}`, "m");
+    if (replaceMarkerOnly.test(content)) return content.replace(replaceMarkerOnly, wrapped);
   }
 
+  return null;
+};
+
+const injectBlockAfterFormTag = (content, marker, blockText) => {
+  const replaced = replaceExistingMarkedBlock(content, marker, blockText);
+  if (replaced !== null) return replaced;
+
+  const markerComment = `{{!-- ${marker} --}}`;
+  const wrapped = `\n    ${markerComment}\n${blockText}`;
   return content.replace(/<form[^>]*>/, (match) => `${match}${wrapped}`);
+};
+
+const injectBlockBeforeFormClose = (content, marker, blockText) => {
+  const replaced = replaceExistingMarkedBlock(content, marker, blockText);
+  if (replaced !== null) return replaced;
+
+  const markerComment = `{{!-- ${marker} --}}`;
+  const wrapped = `\n    ${markerComment}\n${blockText}\n`;
+  const closeIdx = content.lastIndexOf("</form>");
+  if (closeIdx === -1) return content;
+  return `${content.slice(0, closeIdx)}${wrapped}${content.slice(closeIdx)}`;
+};
+
+const removeInjectedBlock = (content, marker) => {
+  const markerComment = `{{!-- ${marker} --}}`;
+  if (!content.includes(markerComment)) return content;
+  const markerRegex = escapeRegExp(markerComment);
+  const replaceRegex = new RegExp(
+    `\\s*${markerRegex}\\s*(?:<style>[\\s\\S]*?<\\/style>\\s*)?(?:<video[\\s\\S]*?<\\/video>|<script>[\\s\\S]*?<\\/script>)`,
+    "m"
+  );
+  return content.replace(replaceRegex, "");
+};
+
+const ensureVideoBlockAtFormEnd = (content, marker, blockText) => {
+  const cleaned = removeInjectedBlock(content, marker);
+  return injectBlockBeforeFormClose(cleaned, marker, blockText);
+};
+
+const injectFeatureBlock = (content, marker, blockText, position = "after-open") => {
+  if (position === "before-close") return injectBlockBeforeFormClose(content, marker, blockText);
+  return injectBlockAfterFormTag(content, marker, blockText);
+};
+
+const injectVideoBlock = (content, marker, blockText) => {
+  // Keep join-form heading as first child to preserve framed styling.
+  return ensureVideoBlockAtFormEnd(content, marker, blockText);
+};
+
+const injectToggleBlock = (content, marker, blockText) => {
+  return injectFeatureBlock(content, marker, blockText, "after-open");
 };
 
 const applyActivePlayersOnly = (content, replacementBlock) => {
@@ -452,10 +503,10 @@ const main = async () => {
       after = applyActivePlayersOnly(after, snippets.activeUsersEachBlock).content;
     }
     if (supportVideo) {
-      after = injectBlockAfterFormTag(after, profile.markers.video, snippets.videoBlock);
+      after = injectVideoBlock(after, profile.markers.video, snippets.videoBlock);
     }
     if (setupToggle) {
-      after = injectBlockAfterFormTag(after, profile.markers.toggle, snippets.toggleBlock);
+      after = injectToggleBlock(after, profile.markers.toggle, snippets.toggleBlock);
     }
     return { content: after, changed: after !== before };
   });
