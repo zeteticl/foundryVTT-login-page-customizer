@@ -1,0 +1,25 @@
+{
+  "version": "13.351",
+  "markers": {
+    "video": "fvtt-login-patcher: video background",
+    "toggle": "fvtt-login-patcher: setup toggle"
+  },
+  "files": {
+    "joinForm": "templates/setup/parts/join-form.hbs",
+    "joinSetup": "templates/setup/parts/join-setup.hbs",
+    "joinWorld": "templates/setup/parts/join-world.hbs",
+    "joinDetails": "templates/setup/parts/join-details.hbs",
+    "baseWorld": "common/packages/base-world.mjs"
+  },
+  "snippets": {
+    "videoBlock": "snippets/join-form.video.hbs",
+    "toggleBlock": "snippets/join-form.setup-toggle.hbs",
+    "activeUsersEachBlock": "snippets/join-form.active-users.hbs"
+  },
+  "baseWorldVideoPatch": {
+    "backgroundCategoriesFrom": "categories: [\"IMAGE\"]",
+    "backgroundCategoriesTo": "categories: [\"IMAGE\", \"VIDEO\"]",
+    "backgroundValidationFrom": "if ( (typeof data.background === \"string\") && !hasFileExtension(data.background, Object.keys(FILE_CATEGORIES.IMAGE)) ) {",
+    "backgroundValidationTo": "if ( (typeof data.background === \"string\") && !(hasFileExtension(data.background, Object.keys(FILE_CATEGORIES.IMAGE)) || hasFileExtension(data.background, Object.keys(FILE_CATEGORIES.VIDEO))) ) {"
+  }
+}

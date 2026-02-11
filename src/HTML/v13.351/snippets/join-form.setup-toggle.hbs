@@ -1,0 +1,38 @@
+    <div id="join-setup-toggle"
+         role="button"
+         tabindex="0"
+         aria-label="Toggle setup panel"
+         style="position: fixed; left: 16px; bottom: 16px; width: 32px; height: 32px; border-radius: 50%;
+                background: rgba(0,0,0,.55); color: #fff; display: flex; align-items: center; justify-content: center;
+                cursor: pointer; user-select: none; z-index: 5;">&lt;</div>
+    <script>
+    (() => {
+      const setupId = "join-game-setup";
+      const toggleId = "join-setup-toggle";
+      const init = () => {
+        const setup = document.getElementById(setupId);
+        const toggle = document.getElementById(toggleId);
+        if (!setup || !toggle || toggle.dataset.bound === "1") return;
+        setup.style.display = "none";
+        const syncText = () => {
+          toggle.textContent = setup.style.display === "none" ? ">" : "<";
+        };
+        const doToggle = () => {
+          setup.style.display = setup.style.display === "none" ? "" : "none";
+          syncText();
+        };
+        toggle.addEventListener("click", doToggle);
+        toggle.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            doToggle();
+          }
+        });
+        toggle.dataset.bound = "1";
+        syncText();
+      };
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init, { once: true });
+      } else init();
+    })();
+    </script>
