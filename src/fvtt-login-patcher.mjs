@@ -327,10 +327,10 @@ const collectBackupTags = async (appRoot, relativePaths) => {
     }
   }
 
-  const byTagDesc = (a, b) => b.tag.localeCompare(a.tag);
+  const byTagAsc = (a, b) => a.tag.localeCompare(b.tag);
   return Array.from(tagMap.values())
     .map((t) => ({ ...t, files: Array.from(t.files).sort() }))
-    .sort((a, b) => byTagDesc(a, b) || (b.newest - a.newest));
+    .sort((a, b) => byTagAsc(a, b) || (a.newest - b.newest));
 };
 
 const restoreFromBackupTag = async (appRoot, relativePaths, tag) => {
@@ -439,6 +439,38 @@ const main = async () => {
       missing.forEach((f) => console.log(`- ${f}`));
     }
     return;
+  }
+
+  // Modify mode pre-check: offer restoring an existing backup set first.
+  const existingTags = await collectBackupTags(appRoot, targetRelativePaths);
+  if (existingTags.length) {
+    console.log("Existing backup sets detected / 偵測到既有備份批次：");
+    existingTags.forEach((t) => console.log(`- ${t.tag} (${t.count} files)`));
+    const restoreFirst = await askYesNo(
+      "Restore a backup before applying new changes? / 修改前是否先還原備份？",
+      false
+    );
+    if (restoreFirst) {
+      const labels = existingTags.map((t) => `${t.tag} (${t.count} files)`);
+      const defaultIdx = Math.max(0, labels.length - 1); // latest by default while list is oldest->newest
+      const tagIdx = await askChoice("Select backup tag / 選擇要還原的備份批次", labels, defaultIdx);
+      const selectedTagInfo = existingTags[tagIdx];
+      const selectedTag = selectedTagInfo.tag;
+      const confirm = await askYesNo(`Restore backup tag ${selectedTag}? / 要還原 ${selectedTag} 嗎？`, true);
+      if (confirm) {
+        const { restored, missing } = await restoreFromBackupTag(appRoot, selectedTagInfo.files, selectedTag);
+        console.log("\nRestore completed before modify. / 修改前還原完成。");
+        if (restored.length) {
+          console.log("Restored files / 已還原檔案:");
+          restored.forEach((f) => console.log(`- ${f}`));
+        }
+        if (missing.length) {
+          console.log("Missing backups for files / 下列檔案沒有該批次備份:");
+          missing.forEach((f) => console.log(`- ${f}`));
+        }
+        console.log("");
+      }
+    }
   }
 
   const activeOnly = await askYesNo(
