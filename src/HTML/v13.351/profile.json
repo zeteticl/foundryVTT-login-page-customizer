@@ -1,5 +1,6 @@
 {
   "version": "13.351",
+  "lastAppRoot": "C:\\Program Files\\Foundry Virtual Tabletop\\resources\\app",
   "markers": {
     "video": "fvtt-login-patcher: video background",
     "toggle": "fvtt-login-patcher: setup toggle"

@@ -157,7 +157,7 @@ const loadProfile = async (versionTag) => {
     snippets[name] = text.replace(/\r\n/g, "\n").trimEnd();
   }
 
-  return { profileDir, profile, snippets };
+  return { profileDir, profilePath, profile, snippets };
 };
 
 const replaceExistingMarkedBlock = (content, marker, replacement) => {
@@ -396,9 +396,18 @@ const main = async () => {
     console.log("");
   }
 
-  const { profile, snippets } = await loadProfile(selectedProfileTag);
+  const { profilePath, profile, snippets } = await loadProfile(selectedProfileTag);
+
+  // Persist last target app root for this profile.
+  if (profile.lastAppRoot !== appRoot) {
+    profile.lastAppRoot = appRoot;
+    await fs.writeFile(profilePath, `${JSON.stringify(profile, null, 2)}\n`, "utf8");
+  }
 
   console.log(`Using profile / 使用模板: ${selectedProfileTag}`);
+  if (profile.lastAppRoot) {
+    console.log(`Last app root / 上一次目標 app 目錄: ${profile.lastAppRoot}`);
+  }
   console.log(`Backup support / 備份功能: ENABLED (.bak.<timestamp>)\n`);
 
   const targetRelativePaths = [

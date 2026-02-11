@@ -2,10 +2,13 @@
       body.join #main-background {
         display: none !important;
       }
-      body.join #join-game {
-        position: relative;
-        z-index: 1;
+
+      /* Ensure join form keeps the same framed layer as other panels */
+      body.join #join-game-form {
+        z-index: auto;
       }
+
+      /* Only control the video layer; do not change form z-index/background */
       body.join #join-background-video {
         position: fixed;
         inset: 0;
@@ -25,5 +28,4 @@
       playsinline
       preload="auto"
       src="{{world.background}}"
-      onerror="this.style.display='none';"
     ></video>
