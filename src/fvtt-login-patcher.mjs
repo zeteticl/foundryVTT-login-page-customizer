@@ -10,6 +10,7 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const PROFILE_ROOT = path.join(SCRIPT_DIR, "HTML");
 const USERS_BLOCK_REGEX = /{{#each users}}[\s\S]*?{{\/each}}/;
 const WINDOWS_DEFAULT_APP_ROOT = "C:\\Program Files\\Foundry Virtual Tabletop\\resources\\app";
+const SINGLE_BACKUP_TAG = "orig";
 
 const rl = readline.createInterface({ input, output });
 
@@ -333,13 +334,38 @@ const collectBackupTags = async (appRoot, relativePaths) => {
     .sort((a, b) => byTagAsc(a, b) || (a.newest - b.newest));
 };
 
-const restoreFromBackupTag = async (appRoot, relativePaths, tag) => {
+const backupPathForFile = (filePath) => `${filePath}.bak.${SINGLE_BACKUP_TAG}`;
+
+const hasAnyBackupSet = async (appRoot, relativePaths) => {
+  for (const relativePath of relativePaths) {
+    const targetPath = path.join(appRoot, relativePath);
+    const backupPath = backupPathForFile(targetPath);
+    const exists = await readIfExists(backupPath);
+    if (exists !== null) return true;
+  }
+  return false;
+};
+
+const createInitialBackupSet = async (appRoot, relativePaths) => {
+  const created = [];
+  for (const relativePath of relativePaths) {
+    const targetPath = path.join(appRoot, relativePath);
+    const before = await readIfExists(targetPath);
+    if (before === null) continue;
+    const backupPath = backupPathForFile(targetPath);
+    await fs.copyFile(targetPath, backupPath);
+    created.push(path.relative(appRoot, backupPath));
+  }
+  return created;
+};
+
+const restoreSingleBackupSet = async (appRoot, relativePaths) => {
   const restored = [];
   const missing = [];
 
   for (const relativePath of relativePaths) {
     const targetPath = path.join(appRoot, relativePath);
-    const backupPath = `${targetPath}.bak.${tag}`;
+    const backupPath = backupPathForFile(targetPath);
     const backupText = await readIfExists(backupPath);
     if (backupText === null) {
       missing.push(relativePath);
@@ -408,7 +434,7 @@ const main = async () => {
   if (profile.lastAppRoot) {
     console.log(`Last app root / 上一次目標 app 目錄: ${profile.lastAppRoot}`);
   }
-  console.log(`Backup support / 備份功能: ENABLED (.bak.<timestamp>)\n`);
+  console.log(`Backup support / 備份功能: ENABLED (.bak.${SINGLE_BACKUP_TAG})\n`);
 
   const targetRelativePaths = [
     profile.files.joinForm,
@@ -420,24 +446,24 @@ const main = async () => {
   ].filter(Boolean);
 
   if (isRestoreMode) {
-    const tags = await collectBackupTags(appRoot, targetRelativePaths);
-    if (!tags.length) {
+    let hasBackup = await hasAnyBackupSet(appRoot, targetRelativePaths);
+    if (!hasBackup) {
+      const created = await createInitialBackupSet(appRoot, targetRelativePaths);
+      hasBackup = created.length > 0;
+    }
+
+    if (!hasBackup) {
       console.log("No backups found. / 找不到備份檔案。");
       return;
     }
 
-    const labels = tags.map((t) => `${t.tag} (${t.count} files)`);
-    const tagIdx = await askChoice("Select backup tag / 選擇要還原的備份批次", labels, 0);
-    const selectedTagInfo = tags[tagIdx];
-    const selectedTag = selectedTagInfo.tag;
-
-    const confirm = await askYesNo(`Restore backup tag ${selectedTag}? / 要還原 ${selectedTag} 嗎？`, true);
+    const confirm = await askYesNo("Restore from backup? / 要從備份還原嗎？", true);
     if (!confirm) {
       console.log("Cancelled. / 已取消。");
       return;
     }
 
-    const { restored, missing } = await restoreFromBackupTag(appRoot, selectedTagInfo.files, selectedTag);
+    const { restored, missing } = await restoreSingleBackupSet(appRoot, targetRelativePaths);
     console.log("\nRestore completed. / 還原完成。");
     if (restored.length) {
       console.log("Restored files / 已還原檔案:");
@@ -450,36 +476,30 @@ const main = async () => {
     return;
   }
 
-  // Modify mode pre-check: offer restoring an existing backup set first.
-  const existingTags = await collectBackupTags(appRoot, targetRelativePaths);
-  if (existingTags.length) {
-    console.log("Existing backup sets detected / 偵測到既有備份批次：");
-    existingTags.forEach((t) => console.log(`- ${t.tag} (${t.count} files)`));
-    const restoreFirst = await askYesNo(
-      "Restore a backup before applying new changes? / 修改前是否先還原備份？",
-      false
-    );
-    if (restoreFirst) {
-      const labels = existingTags.map((t) => `${t.tag} (${t.count} files)`);
-      const defaultIdx = Math.max(0, labels.length - 1); // latest by default while list is oldest->newest
-      const tagIdx = await askChoice("Select backup tag / 選擇要還原的備份批次", labels, defaultIdx);
-      const selectedTagInfo = existingTags[tagIdx];
-      const selectedTag = selectedTagInfo.tag;
-      const confirm = await askYesNo(`Restore backup tag ${selectedTag}? / 要還原 ${selectedTag} 嗎？`, true);
-      if (confirm) {
-        const { restored, missing } = await restoreFromBackupTag(appRoot, selectedTagInfo.files, selectedTag);
-        console.log("\nRestore completed before modify. / 修改前還原完成。");
-        if (restored.length) {
-          console.log("Restored files / 已還原檔案:");
-          restored.forEach((f) => console.log(`- ${f}`));
-        }
-        if (missing.length) {
-          console.log("Missing backups for files / 下列檔案沒有該批次備份:");
-          missing.forEach((f) => console.log(`- ${f}`));
-        }
-        console.log("");
-      }
+  // Modify mode pre-check: ensure a single backup set exists, and always restore it before modify.
+  let hasBackup = await hasAnyBackupSet(appRoot, targetRelativePaths);
+  if (!hasBackup) {
+    const created = await createInitialBackupSet(appRoot, targetRelativePaths);
+    hasBackup = created.length > 0;
+    if (hasBackup) {
+      console.log("Initial backup created. / 已建立初始備份：");
+      created.forEach((f) => console.log(`- ${f}`));
+      console.log("");
     }
+  }
+
+  if (hasBackup) {
+    const { restored, missing } = await restoreSingleBackupSet(appRoot, targetRelativePaths);
+    console.log("\nAuto-restore from backup before modify. / 修改前自動從備份還原。");
+    if (restored.length) {
+      console.log("Restored files / 已還原檔案:");
+      restored.forEach((f) => console.log(`- ${f}`));
+    }
+    if (missing.length) {
+      console.log("Missing backups for files / 下列檔案沒有對應備份:");
+      missing.forEach((f) => console.log(`- ${f}`));
+    }
+    console.log("");
   }
 
   const activeOnly = await askYesNo(
@@ -518,9 +538,7 @@ const main = async () => {
     return;
   }
 
-  const backupTag = timestampTag();
   const touched = [];
-  const backups = [];
   const warnings = [];
 
   const patchFile = async (relativePath, patcher) => {
@@ -532,10 +550,8 @@ const main = async () => {
     }
     const { content: after, changed } = patcher(before);
     if (!changed) return;
-    const backupPath = await ensureBackup(fullPath, backupTag);
     await fs.writeFile(fullPath, after, "utf8");
     touched.push(relativePath);
-    backups.push(path.relative(appRoot, backupPath));
   };
 
   await patchFile(profile.files.joinForm, (before) => {
@@ -594,11 +610,6 @@ const main = async () => {
     touched.forEach((f) => console.log(`- ${f}`));
   } else {
     console.log("No content changed. / 沒有可套用的變更。");
-  }
-
-  if (backups.length) {
-    console.log("\nBackups / 備份檔案:");
-    backups.forEach((f) => console.log(`- ${f}`));
   }
 
   if (warnings.length) {
