@@ -507,7 +507,7 @@ const main = async () => {
 
   const defaultRoot = await getDefaultRoot();
   const rootAnswer = (await rl.question(
-    `Target Foundry app root or repo root / 目標 Foundry app 或 repo 根目錄\n(default / 預設: ${defaultRoot})\n> `
+    `Target Foundry app root / 目標 Foundry app\n(default / 預設: ${defaultRoot})\n> `
   )).trim();
   const root = path.resolve(rootAnswer || defaultRoot);
   const appRoot = await resolveAppRoot(root);
