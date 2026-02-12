@@ -139,7 +139,7 @@ src/
 
 ## Credits
 
-- **xtlcme** — Original idea: [女神幻想論壇 — Foundry 登入頁自訂](https://www.goddessfantasy.net/bbs/index.php?topic=126755.0)
+- **xtlcme** — Original idea: [純美論壇 — 【優化】魔改動態登錄界面v2](https://www.goddessfantasy.net/bbs/index.php?topic=126755.0)
 
 ## Disclaimer
 
