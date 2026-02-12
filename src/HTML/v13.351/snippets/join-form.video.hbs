@@ -17,7 +17,14 @@
         object-fit: cover;
         z-index: -1;
         pointer-events: none;
-        background: #000;
+        /* Fallback image support: use the same background URL variable
+           that the default #main-background uses. This shows images when
+           world.background is an IMAGE, while videos still play normally. */
+        background-color: #000;
+        background-image: var(--background-url);
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
       }
     </style>
     <video

@@ -1,2 +1,5 @@
 /app
 /diy-style-package
+
+# Per-profile last app root (user-specific path)
+**/last-app-root.txt

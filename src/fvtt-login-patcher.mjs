@@ -8,6 +8,7 @@ import { stdin as input, stdout as output } from "node:process";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const PROFILE_ROOT = path.join(SCRIPT_DIR, "HTML");
+const LAST_APP_ROOT_FILE = "last-app-root.txt";
 const USERS_BLOCK_REGEX = /{{#each users}}[\s\S]*?{{\/each}}/;
 const WINDOWS_DEFAULT_APP_ROOT = "C:\\Program Files\\Foundry Virtual Tabletop\\resources\\app";
 const SINGLE_BACKUP_TAG = "orig";
@@ -96,9 +97,26 @@ const resolveAppRoot = async (rootInput) => {
   throw new Error(`Could not find Foundry app root from: ${rootInput}`);
 };
 
+const getStoredLastAppRoot = async () => {
+  const entries = await fs.readdir(PROFILE_ROOT, { withFileTypes: true }).catch(() => []);
+  const dirs = entries
+    .filter((e) => e.isDirectory() && e.name.startsWith("v"))
+    .map((e) => e.name)
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  for (const tag of dirs) {
+    const lastAppRootPath = path.join(PROFILE_ROOT, tag, LAST_APP_ROOT_FILE);
+    const text = await readIfExists(lastAppRootPath);
+    if (!text) continue;
+    const last = text.trim();
+    if (last && (await pathExists(last))) return last;
+  }
+  return null;
+};
+
 const getDefaultRoot = async () => {
-  if (await pathExists(WINDOWS_DEFAULT_APP_ROOT)) return WINDOWS_DEFAULT_APP_ROOT;
-  return process.cwd();
+  const stored = await getStoredLastAppRoot();
+  if (stored) return stored;
+  return WINDOWS_DEFAULT_APP_ROOT;
 };
 
 const detectVersionTag = async (appRoot) => {
@@ -422,17 +440,19 @@ const main = async () => {
     console.log("");
   }
 
-  const { profilePath, profile, snippets } = await loadProfile(selectedProfileTag);
+  const { profileDir, profilePath, profile, snippets } = await loadProfile(selectedProfileTag);
 
-  // Persist last target app root for this profile.
-  if (profile.lastAppRoot !== appRoot) {
-    profile.lastAppRoot = appRoot;
-    await fs.writeFile(profilePath, `${JSON.stringify(profile, null, 2)}\n`, "utf8");
+  // Persist last target app root in a separate file (not in profile.json).
+  const lastAppRootPath = path.join(profileDir, LAST_APP_ROOT_FILE);
+  const storedRoot = await readIfExists(lastAppRootPath);
+  const currentRoot = (storedRoot && storedRoot.trim()) || "";
+  if (currentRoot !== appRoot) {
+    await fs.writeFile(lastAppRootPath, appRoot, "utf8");
   }
 
   console.log(`Using profile / 使用模板: ${selectedProfileTag}`);
-  if (profile.lastAppRoot) {
-    console.log(`Last app root / 上一次目標 app 目錄: ${profile.lastAppRoot}`);
+  if (currentRoot || appRoot) {
+    console.log(`Last app root / 上一次目標 app 目錄: ${appRoot}`);
   }
   console.log(`Backup support / 備份功能: ENABLED (.bak.${SINGLE_BACKUP_TAG})\n`);
 
