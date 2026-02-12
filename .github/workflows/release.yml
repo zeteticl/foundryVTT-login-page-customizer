@@ -1,13 +1,44 @@
-# Publish release asset: contents of src/ at root (no src folder).
-# Trigger: when a release is published.
+# Auto-release: when version.json version differs from latest release, create a new release.
+# Trigger: push to main (when version.json or src/ changes).
 name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [main]
+    paths:
+      - version.json
+      - src/**
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.set.outputs.version }}
+      should_release: ${{ steps.set.outputs.should_release }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compare version with latest release
+        id: set
+        run: |
+          CURRENT=$(node -p "require('./version.json').version")
+          echo "version=$CURRENT" >> "$GITHUB_OUTPUT"
+          LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null || echo "")
+          LATEST_VERSION="${LATEST_TAG#v}"
+          if [ -z "$LATEST_TAG" ] || [ "$LATEST_VERSION" != "$CURRENT" ]; then
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            echo "Releasing: current=$CURRENT, latest_release=$LATEST_TAG"
+          else
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "Skip: version $CURRENT already released ($LATEST_TAG)"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish:
+    needs: check
+    if: needs.check.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,7 +66,12 @@ jobs:
           cd dist && zip -r ../foundryVTT-login-page-customizer.zip . && cd ..
           echo "ZIP created: foundryVTT-login-page-customizer.zip"
 
-      - name: Upload release asset
-        run: gh release upload "${{ github.event.release.tag_name }}" foundryVTT-login-page-customizer.zip --clobber
+      - name: Create release and upload asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.check.outputs.version }}
+          name: v${{ needs.check.outputs.version }}
+          files: foundryVTT-login-page-customizer.zip
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

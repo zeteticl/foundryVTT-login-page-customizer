@@ -75,6 +75,8 @@ Or:
 node src/fvtt-login-patcher.mjs
 ```
 
+If you get **Permission denied** on the `.sh` script, run `chmod +x fvtt-login-patcher.sh` (or `chmod +x src/fvtt-login-patcher.sh` when using the repo), or use `node fvtt-login-patcher.mjs` instead.
+
 ### Steps
 
 1. **Target path** — Enter your Foundry app root (e.g. `C:\Program Files\Foundry Virtual Tabletop\resources\app` on Windows). Default is suggested if you've run the patcher before.

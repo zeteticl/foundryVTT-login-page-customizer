@@ -11,6 +11,12 @@ const PROFILE_ROOT = path.join(SCRIPT_DIR, "HTML");
 const LAST_APP_ROOT_FILE = "last-app-root.txt";
 const USERS_BLOCK_REGEX = /{{#each users}}[\s\S]*?{{\/each}}/;
 const WINDOWS_DEFAULT_APP_ROOT = "C:\\Program Files\\Foundry Virtual Tabletop\\resources\\app";
+const LINUX_DEFAULT_APP_ROOT = path.join(
+  process.env.HOME || process.env.USERPROFILE || "",
+  "foundryvtt",
+  "resources",
+  "app"
+);
 const SINGLE_BACKUP_TAG = "orig";
 
 const rl = readline.createInterface({ input, output });
@@ -121,7 +127,7 @@ const getStoredLastAppRoot = async () => {
 const getDefaultRoot = async () => {
   const stored = await getStoredLastAppRoot();
   if (stored) return stored;
-  return WINDOWS_DEFAULT_APP_ROOT;
+  return process.platform === "win32" ? WINDOWS_DEFAULT_APP_ROOT : LINUX_DEFAULT_APP_ROOT;
 };
 
 const detectVersionTag = async (appRoot) => {
@@ -313,7 +319,7 @@ const buildMainLogoStyleBlock = (url) => {
 
 /** 8 title glow palettes: [inner, middle, outer] hex colors for text-shadow layers */
 const TITLE_GLOW_PALETTES = [
-  { name: "Ocean Blue", nameZh: "海洋藍", colors: ["#87CEEB", "#6A5ACD", "#1E90FF"] },
+  { name: "Ocean Blue", nameZh: "海洋藍 (xtlcme)", colors: ["#87CEEB", "#6A5ACD", "#1E90FF"] },
   { name: "Warm Gold", nameZh: "暖金", colors: ["#FFEAA7", "#FDCB6E", "#E17055"] },
   { name: "Purple Dream", nameZh: "紫夢", colors: ["#A29BFE", "#6C5CE7", "#5F27CD"] },
   { name: "Forest", nameZh: "森林綠", colors: ["#55EFC4", "#00B894", "#006266"] },
