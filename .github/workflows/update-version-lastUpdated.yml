@@ -18,15 +18,25 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 2
 
-      - name: Update lastUpdated in version.json
+      - name: Update lastUpdated in version.json (only when version changes)
         id: update
         run: |
           node -e "
           const fs = require('fs');
           const path = require('path');
+          const { execSync } = require('child_process');
           const p = path.join(process.env.GITHUB_WORKSPACE, 'version.json');
           const v = JSON.parse(fs.readFileSync(p, 'utf8'));
+          let prevVersion = null;
+          try {
+            const prevText = execSync('git show HEAD^:version.json', { stdio: ['ignore', 'pipe', 'ignore'] }).toString('utf8');
+            prevVersion = JSON.parse(prevText).version ?? null;
+          } catch (_) {
+            prevVersion = null;
+          }
+          if (prevVersion !== null && String(prevVersion) === String(v.version)) process.exit(3);
           const now = new Date().toISOString();
           if (v.lastUpdated === now) process.exit(2);
           v.lastUpdated = now;
@@ -40,4 +50,4 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add version.json
-          git diff --staged --quiet || git commit -m "chore(version.json): update lastUpdated [skip ci]" && git push
+          git diff --staged --quiet || git commit -m "chore(version.json): update lastUpdated" && git push
