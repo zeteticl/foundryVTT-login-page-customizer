@@ -47,11 +47,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare distribution (no src folder)
+      - name: Prepare distribution (same layout as repo: root launchers + src/)
         run: |
           mkdir -p dist
-          cp -r src/* dist/
+          cp -r src dist/
           cp version.json dist/
+          cp fvtt-login-patcher.cmd fvtt-login-patcher.sh dist/
 
       - name: Update lastUpdated in version.json
         run: |

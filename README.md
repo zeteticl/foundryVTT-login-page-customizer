@@ -25,84 +25,34 @@ A cross-platform Node.js CLI that patches [Foundry Virtual Tabletop](https://fou
 ## Requirements
 
 - **Node.js** (LTS recommended)
-- Foundry VTT installation (tested with v13.x; profile for v13.351 included)
+- Foundry VTT (tested v13.x; profile v13.351 included)
 
-## Installation
+## Install & run
 
-**Option A — Release (recommended)**  
-Download the latest [Release](https://github.com/zeteticl/foundryVTT-login-page-customizer/releases) zip. Extract it; the archive has no `src` folder (patcher and `HTML/` are at the root). Run the patcher from that folder.
+1. **Get the project** — [Download release zip](https://github.com/zeteticl/foundryVTT-login-page-customizer/releases) and extract, or `git clone` and `cd` into the repo. Both have the same layout (launchers at root, script in `src/`). No `npm install` needed.
+2. **Run** from that folder:
 
-**Option B — Clone**
+   | Platform     | Command                  |
+   | ------------ | ------------------------ |
+   | Windows      | `fvtt-login-patcher.cmd` |
+   | Linux/macOS  | `./fvtt-login-patcher.sh` |
 
-```bash
-git clone https://github.com/zeteticl/foundryVTT-login-page-customizer.git
-cd foundryVTT-login-page-customizer
-```
+   Linux/macOS: if **Permission denied**, run `chmod +x fvtt-login-patcher.sh` once, or use `node src/fvtt-login-patcher.mjs`.
 
-No `npm install` is required — the patcher uses only Node.js built-in modules.
+3. **Follow prompts** — Choose Foundry app path, **Modify** or **Restore**, then options. Backups are `*.bak.orig`; use Restore to undo.
 
-## Usage
+## Version support
 
-### Windows (PowerShell or CMD)
+The patcher reads Foundry version from `package.json` and uses a profile under `src/HTML/` (e.g. `v13.351`). For other builds, add or edit a profile in that folder.
 
-If you use the **release zip**, run from the extracted folder:
-
-```cmd
-fvtt-login-patcher.cmd
-```
-
-If you **cloned the repo**, run from the `src` folder or:
-
-```cmd
-node src\fvtt-login-patcher.mjs
-```
-
-### Linux / macOS
-
-If you use the **release zip**, from the extracted folder:
-
-```bash
-./fvtt-login-patcher.sh
-```
-
-If you **cloned the repo**:
-
-```bash
-./src/fvtt-login-patcher.sh
-```
-
-Or:
-
-```bash
-node src/fvtt-login-patcher.mjs
-```
-
-If you get **Permission denied** on the `.sh` script, run `chmod +x fvtt-login-patcher.sh` (or `chmod +x src/fvtt-login-patcher.sh` when using the repo), or use `node fvtt-login-patcher.mjs` instead.
-
-### Steps
-
-1. **Target path** — Enter your Foundry app root (e.g. `C:\Program Files\Foundry Virtual Tabletop\resources\app` on Windows). Default is suggested if you've run the patcher before.
-2. **Mode** — Choose **Modify** (backup + patch) or **Restore** (revert from backup).
-3. **Options** — Answer the interactive prompts (yes/no and choices) for each feature.
-4. **Apply** — Confirm to write changes. Modified files are listed at the end.
-
-Backups are stored as `*.bak.orig` next to the patched files. Use **Restore** mode to revert.
-
-## Version Support
-
-The tool detects your Foundry version from `package.json` and uses a matching profile under `src/HTML/` (e.g. `v13.351`). If your build differs, you may need to add or adjust a profile (see `profile.json` and `snippets/` in that folder).
-
-## Project Structure
+## Project structure
 
 ```
 src/
-├── fvtt-login-patcher.mjs   # Main CLI script
+├── fvtt-login-patcher.mjs   # Main script
 ├── fvtt-login-patcher.cmd   # Windows launcher
 ├── fvtt-login-patcher.sh    # Unix launcher
-└── HTML/
-    └── v13.351/             # Profile for Foundry v13.351
-        ├── profile.json     # Paths, markers, snippet map
-        └── snippets/        # Handlebars/JS snippets injected by the patcher
+└── HTML/v13.351/            # Profile (profile.json, snippets/)
 ```
 
 ## Credits

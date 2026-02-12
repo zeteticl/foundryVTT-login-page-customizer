@@ -1,0 +1,43 @@
+# When version.json is changed, set lastUpdated to current time and commit back.
+name: Update version.json lastUpdated
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - version.json
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update lastUpdated in version.json
+        id: update
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const p = path.join(process.env.GITHUB_WORKSPACE, 'version.json');
+          const v = JSON.parse(fs.readFileSync(p, 'utf8'));
+          const now = new Date().toISOString();
+          if (v.lastUpdated === now) process.exit(2);
+          v.lastUpdated = now;
+          fs.writeFileSync(p, JSON.stringify(v, null, 2) + '\n');
+          "
+        continue-on-error: true
+
+      - name: Commit and push
+        if: steps.update.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.json
+          git diff --staged --quiet || git commit -m "chore(version.json): update lastUpdated [skip ci]" && git push
