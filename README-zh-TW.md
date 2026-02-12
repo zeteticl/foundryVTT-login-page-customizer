@@ -4,6 +4,7 @@
 [![GitHub 下載次數](https://img.shields.io/github/downloads/zeteticl/foundryVTT-login-page-customizer/total)](https://github.com/zeteticl/foundryVTT-login-page-customizer/releases)
 [![最後提交](https://img.shields.io/github/last-commit/zeteticl/foundryVTT-login-page-customizer)](https://github.com/zeteticl/foundryVTT-login-page-customizer/commits/main)
 [![GitHub 星數](https://img.shields.io/github/stars/zeteticl/foundryVTT-login-page-customizer)](https://github.com/zeteticl/foundryVTT-login-page-customizer)
+[![Patreon 贊助](https://img.shields.io/badge/Patreon-贊助-F96854?logo=patreon)](https://www.patreon.com/HKTRPG)
 
 ![Customized login page](image/login.png)
 

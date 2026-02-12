@@ -6,6 +6,7 @@
 [![GitHub downloads](https://img.shields.io/github/downloads/zeteticl/foundryVTT-login-page-customizer/total)](https://github.com/zeteticl/foundryVTT-login-page-customizer/releases)
 [![GitHub last commit](https://img.shields.io/github/last-commit/zeteticl/foundryVTT-login-page-customizer)](https://github.com/zeteticl/foundryVTT-login-page-customizer/commits/main)
 [![GitHub stars](https://img.shields.io/github/stars/zeteticl/foundryVTT-login-page-customizer)](https://github.com/zeteticl/foundryVTT-login-page-customizer)
+[![Patreon](https://img.shields.io/badge/Patreon-Support-F96854?logo=patreon)](https://www.patreon.com/HKTRPG)
 
 ![Customized login page](image/login.png)
 
