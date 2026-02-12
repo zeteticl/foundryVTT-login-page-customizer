@@ -15,7 +15,8 @@
   "snippets": {
     "videoBlock": "snippets/join-form.video.hbs",
     "toggleBlock": "snippets/join-form.setup-toggle.hbs",
-    "activeUsersEachBlock": "snippets/join-form.active-users.hbs"
+    "activeUsersEachBlock": "snippets/join-form.active-users.hbs",
+    "setupToggleInit": "snippets/setup-toggle-init.js"
   },
   "baseWorldVideoPatch": {
     "backgroundCategoriesFrom": "categories: [\"IMAGE\"]",

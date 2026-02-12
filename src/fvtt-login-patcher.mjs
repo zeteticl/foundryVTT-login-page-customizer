@@ -301,6 +301,22 @@ const hasVideoValidationSupport = (content) => {
   return categoriesOk && validationOk;
 };
 
+const SETUP_TOGGLE_INIT_MARKER_START = "// fvtt-login-patcher: setup toggle init";
+const SETUP_TOGGLE_INIT_MARKER_END = "// fvtt-login-patcher: setup toggle init end";
+
+const injectSetupToggleIntoFoundry = (content, initCode) => {
+  const block = `\n${initCode.trim()}\n`;
+  if (content.includes(SETUP_TOGGLE_INIT_MARKER_START)) {
+    const re = new RegExp(
+      `\\n?${escapeRegExp(SETUP_TOGGLE_INIT_MARKER_START)}[\\s\\S]*?${escapeRegExp(SETUP_TOGGLE_INIT_MARKER_END)}\\n?`,
+      "m"
+    );
+    const replaced = content.replace(re, block);
+    return { content: replaced, changed: replaced !== content };
+  }
+  return { content: content + block, changed: true };
+};
+
 const getBackupCandidatesForFile = async (filePath) => {
   const dir = path.dirname(filePath);
   const base = path.basename(filePath);
@@ -621,6 +637,13 @@ const main = async () => {
     const joinSetupPath = path.join(appRoot, profile.files.joinSetup);
     if ((await readIfExists(joinSetupPath)) === null) {
       warnings.push(`Missing file / 檔案不存在: ${profile.files.joinSetup}`);
+    }
+    if (profile.files.foundryBundle && snippets.setupToggleInit) {
+      await patchFile(profile.files.foundryBundle, (before) =>
+        injectSetupToggleIntoFoundry(before, snippets.setupToggleInit)
+      );
+    } else if (profile.files.foundryBundle && !snippets.setupToggleInit) {
+      warnings.push("Setup toggle enabled but setupToggleInit snippet missing.");
     }
   }
 
