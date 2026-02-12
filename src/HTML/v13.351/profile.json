@@ -2,7 +2,11 @@
   "version": "13.351",
   "markers": {
     "video": "fvtt-login-patcher: video background",
-    "toggle": "fvtt-login-patcher: setup toggle"
+    "toggle": "fvtt-login-patcher: setup toggle",
+    "singleRowUI": "fvtt-login-patcher: single row UI",
+    "mainLogo": "fvtt-login-patcher: main logo override",
+    "titleGlow": "fvtt-login-patcher: title glow",
+    "titleFontSize": "fvtt-login-patcher: title font size"
   },
   "files": {
     "joinForm": "templates/setup/parts/join-form.hbs",
@@ -16,7 +20,8 @@
     "videoBlock": "snippets/join-form.video.hbs",
     "toggleBlock": "snippets/join-form.setup-toggle.hbs",
     "activeUsersEachBlock": "snippets/join-form.active-users.hbs",
-    "setupToggleInit": "snippets/setup-toggle-init.js"
+    "setupToggleInit": "snippets/setup-toggle-init.js",
+    "singleRowUI": "snippets/join-form.single-row-ui.hbs"
   },
   "baseWorldVideoPatch": {
     "backgroundCategoriesFrom": "categories: [\"IMAGE\"]",

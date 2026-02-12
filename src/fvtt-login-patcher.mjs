@@ -50,6 +50,11 @@ const askChoice = async (question, choices, defaultIndex = 0) => {
   }
 };
 
+const askString = async (question, defaultValue = "") => {
+  const raw = (await rl.question(`${question}: `)).trim();
+  return raw !== "" ? raw : defaultValue;
+};
+
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const readIfExists = async (filePath) => {
@@ -191,6 +196,12 @@ const replaceExistingMarkedBlock = (content, marker, replacement) => {
       "m"
     );
     if (replaceRichRegex.test(content)) return content.replace(replaceRichRegex, wrapped);
+    // Replace marker + style-only block (e.g. single-row UI).
+    const replaceStyleOnlyRegex = new RegExp(
+      `\\s*${markerRegex}\\s*<style>[\\s\\S]*?<\\/style>`,
+      "m"
+    );
+    if (replaceStyleOnlyRegex.test(content)) return content.replace(replaceStyleOnlyRegex, wrapped);
     // Fallback: replace just marker line.
     const replaceMarkerOnly = new RegExp(`\\s*${markerRegex}`, "m");
     if (replaceMarkerOnly.test(content)) return content.replace(replaceMarkerOnly, wrapped);
@@ -227,7 +238,12 @@ const removeInjectedBlock = (content, marker) => {
     `\\s*${markerRegex}\\s*(?:<style>[\\s\\S]*?<\\/style>\\s*)?(?:<video[\\s\\S]*?<\\/video>|<script>[\\s\\S]*?<\\/script>)`,
     "m"
   );
-  return content.replace(replaceRegex, "");
+  let out = content.replace(replaceRegex, "");
+  const replaceStyleOnlyRegex = new RegExp(
+    `\\s*${markerRegex}\\s*<style>[\\s\\S]*?<\\/style>`,
+    "m"
+  );
+  return out.replace(replaceStyleOnlyRegex, "");
 };
 
 const ensureVideoBlockAtFormEnd = (content, marker, blockText) => {
@@ -275,6 +291,73 @@ const hideRootTag = (content, tagName) => {
 
   const updated = content.replace(re, `<${tagName}${newAttrs}>`);
   return { content: updated, changed: updated !== content };
+};
+
+/** Remove the join form heading: <h2 class="divider">...</h2> (e.g. "Join Game Session") */
+const removeJoinFormHeading = (content) => {
+  const re = /\s*<h2\s+[^>]*class="[^"]*divider[^"]*"[^>]*>[\s\S]*?<\/h2>\s*/i;
+  if (!re.test(content)) return { content, changed: false };
+  const updated = content.replace(re, "\n    ");
+  return { content: updated, changed: updated !== content };
+};
+
+/** Build style block that overrides --main-logo (blank url = no image) */
+const buildMainLogoStyleBlock = (url) => {
+  const value = url.trim() === ""
+    ? "none"
+    : `url("${String(url).trim().replace(/\\/g, "\\\\").replace(/"/g, '\\"')}")`;
+  return `    <style>
+      body.join, body.setup { --main-logo: ${value}; }
+    </style>`;
+};
+
+/** 8 title glow palettes: [inner, middle, outer] hex colors for text-shadow layers */
+const TITLE_GLOW_PALETTES = [
+  { name: "Ocean Blue", nameZh: "海洋藍", colors: ["#87CEEB", "#6A5ACD", "#1E90FF"] },
+  { name: "Warm Gold", nameZh: "暖金", colors: ["#FFEAA7", "#FDCB6E", "#E17055"] },
+  { name: "Purple Dream", nameZh: "紫夢", colors: ["#A29BFE", "#6C5CE7", "#5F27CD"] },
+  { name: "Forest", nameZh: "森林綠", colors: ["#55EFC4", "#00B894", "#006266"] },
+  { name: "Sunset", nameZh: "夕陽", colors: ["#FF7675", "#E84393", "#D63031"] },
+  { name: "Ice", nameZh: "冰藍", colors: ["#81ECEC", "#74B9FF", "#0984E3"] },
+  { name: "Fire", nameZh: "火焰", colors: ["#FAB1A0", "#E17055", "#D63031"] },
+  { name: "Mystic", nameZh: "幻紫", colors: ["#FD79A8", "#A29BFE", "#6C5CE7"] }
+];
+
+/** Build style block for title glow (no font-family change). paletteIndex 0..7 */
+const buildTitleGlowStyleBlock = (paletteIndex) => {
+  const palette = TITLE_GLOW_PALETTES[paletteIndex] ?? TITLE_GLOW_PALETTES[0];
+  const [c1, c2, c3] = palette.colors;
+  const shadow = [
+    `1px 1px 10px ${c1}`,
+    `-1px -1px 10px ${c1}`,
+    `2px 2px 20px ${c2}`,
+    `-2px -2px 20px ${c2}`,
+    `3px 3px 30px ${c3}`,
+    `-3px -3px 30px ${c3}`
+  ].join(", ");
+  return `    <style>
+      body.join #main-header h1 {
+        color: white;
+        text-align: center;
+        text-shadow: ${shadow};
+      }
+    </style>`;
+};
+
+/** Normalize font-size input: blank -> 99px, number -> Npx, else as-is. */
+const normalizeFontSize = (input) => {
+  const s = String(input ?? "").trim();
+  if (s === "") return "99px";
+  if (/^\d+$/.test(s)) return `${s}px`;
+  return s;
+};
+
+/** Build style block for title font-size (body.join #main-header h1). */
+const buildTitleFontSizeStyleBlock = (fontSizeInput) => {
+  const value = normalizeFontSize(fontSizeInput);
+  return `    <style>
+      body.join #main-header h1 { font-size: ${value}; }
+    </style>`;
 };
 
 const patchBaseWorldForVideo = (content, rule) => {
@@ -558,6 +641,49 @@ const main = async () => {
     "5) Hide game details panel? / 隱藏遊戲詳情區塊？",
     true
   );
+  const singleRowUI = await askYesNo(
+    "6) Single-row UI (compact, centered layout)? / 單行顯示 UI（緊湊置中）？",
+    true
+  );
+  const removeJoinHeading = await askYesNo(
+    "7) Remove 'Join Game Session' heading? / 移除「Join Game Session」標題？",
+    true
+  );
+  const overrideMainLogo = await askYesNo(
+    "8) Override main logo (--main-logo)? / 覆寫主 logo？",
+    true
+  );
+  let mainLogoUrl = "";
+  if (overrideMainLogo) {
+    mainLogoUrl = await askString(
+      "   Main logo URL (blank = no image) / 主 logo URL（留空為無圖片）",
+      ""
+    );
+  }
+  const titleGlowEnabled = await askYesNo(
+    "9) Title glow style (text-shadow, 8 palettes)? / 標題發光風格（8 組配色）？",
+    true
+  );
+  let titleGlowPaletteIndex = 0;
+  if (titleGlowEnabled) {
+    const labels = TITLE_GLOW_PALETTES.map((p, i) => `${i + 1}. ${p.name} / ${p.nameZh}`);
+    titleGlowPaletteIndex = await askChoice(
+      "   Select palette / 選擇配色",
+      labels,
+      0
+    );
+  }
+  const titleFontSizeEnabled = await askYesNo(
+    "10) Set title font size ? / 設定標題字級",
+    true
+  );
+  let titleFontSizeInput = "";
+  if (titleFontSizeEnabled) {
+    titleFontSizeInput = await askString(
+      "   Font size (blank = 99px, or e.g. 72 / 2rem) / 字級（留空為 99px，或輸入數字/單位）",
+      ""
+    );
+  }
 
   console.log("\nPlanned changes / 預計修改：");
   console.log(`- Active players only / 只顯示 active 玩家: ${activeOnly ? "ON" : "OFF"}`);
@@ -565,6 +691,11 @@ const main = async () => {
   console.log(`- Setup toggle / 返回設定收合按鈕: ${setupToggle ? "ON" : "OFF"}`);
   console.log(`- Hide world panel / 隱藏世界描述: ${hideWorld ? "ON" : "OFF"}`);
   console.log(`- Hide details panel / 隱藏遊戲詳情: ${hideDetails ? "ON" : "OFF"}`);
+  console.log(`- Single-row UI / 單行顯示 UI: ${singleRowUI ? "ON" : "OFF"}`);
+  console.log(`- Remove Join heading / 移除 Join 標題: ${removeJoinHeading ? "ON" : "OFF"}`);
+  console.log(`- Main logo override / 主 logo 覆寫: ${overrideMainLogo ? (mainLogoUrl.trim() ? mainLogoUrl.trim() : "none (no image)") : "OFF"}`);
+  console.log(`- Title glow / 標題發光: ${titleGlowEnabled ? TITLE_GLOW_PALETTES[titleGlowPaletteIndex].name + " / " + TITLE_GLOW_PALETTES[titleGlowPaletteIndex].nameZh : "OFF"}`);
+  console.log(`- Title font size / 標題字級: ${titleFontSizeEnabled ? normalizeFontSize(titleFontSizeInput) : "OFF"}`);
   console.log(`- App root / 目標 app 目錄: ${appRoot}`);
   console.log(`- Profile / 版本模板: ${profile.version}\n`);
 
@@ -600,6 +731,33 @@ const main = async () => {
     }
     if (setupToggle) {
       after = injectToggleBlock(after, profile.markers.toggle, snippets.toggleBlock);
+    }
+    if (singleRowUI && snippets.singleRowUI) {
+      after = injectFeatureBlock(after, profile.markers.singleRowUI, snippets.singleRowUI, "after-open");
+    } else if (!singleRowUI && profile.markers.singleRowUI) {
+      after = removeInjectedBlock(after, profile.markers.singleRowUI);
+    }
+    if (removeJoinHeading) {
+      const r = removeJoinFormHeading(after);
+      after = r.content;
+    }
+    if (overrideMainLogo) {
+      const logoBlock = buildMainLogoStyleBlock(mainLogoUrl);
+      after = injectFeatureBlock(after, profile.markers.mainLogo, logoBlock, "after-open");
+    } else if (profile.markers.mainLogo) {
+      after = removeInjectedBlock(after, profile.markers.mainLogo);
+    }
+    if (titleGlowEnabled) {
+      const titleGlowBlock = buildTitleGlowStyleBlock(titleGlowPaletteIndex);
+      after = injectFeatureBlock(after, profile.markers.titleGlow, titleGlowBlock, "after-open");
+    } else if (profile.markers.titleGlow) {
+      after = removeInjectedBlock(after, profile.markers.titleGlow);
+    }
+    if (titleFontSizeEnabled) {
+      const titleFontSizeBlock = buildTitleFontSizeStyleBlock(titleFontSizeInput);
+      after = injectFeatureBlock(after, profile.markers.titleFontSize, titleFontSizeBlock, "after-open");
+    } else if (profile.markers.titleFontSize) {
+      after = removeInjectedBlock(after, profile.markers.titleFontSize);
     }
     return { content: after, changed: after !== before };
   });

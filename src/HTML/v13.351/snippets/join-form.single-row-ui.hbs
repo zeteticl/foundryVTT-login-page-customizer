@@ -1,0 +1,47 @@
+    <style>
+      /* Single-row join UI: panels in one row, centered, stick to bottom with watermark (reference: fvttloginscreen) */
+      body.join {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      body.join #main-header {
+        margin-top: 10rem;
+        flex-shrink: 0;
+      }
+
+      body.join #join-game {
+        margin-top: auto;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 1rem;
+        padding: 0 1rem 0.5rem;
+      }
+
+      body.join #watermark {
+        flex-shrink: 0;
+        padding-bottom: 0.5rem;
+      }
+
+      body.join #join-game .application.framed,
+      body.join #join-game-form.standard-form.framed {
+        max-width: 360px;
+        min-width: 280px;
+        border-radius: 10px;
+        border: 2px solid #111;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+      }
+
+      body.join #join-setup-toggle {
+        bottom: 20px;
+        left: 50px;
+      }
+
+      body.join #join-setup-toggle:hover {
+        background-color: rgba(180, 60, 60, 0.9);
+      }
+    </style>
