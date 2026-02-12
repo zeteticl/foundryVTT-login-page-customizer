@@ -11,7 +11,7 @@ A cross-platform Node.js CLI that patches [Foundry Virtual Tabletop](https://fou
 
 ## Features
 
-- **Active players only** — Show only active players in the user list
+- **Hide role-none users** — Users whose role is "none" are not shown in the join list
 - **Video background** — Use video files as join/setup page backgrounds (with base-world patch). Supported formats: **MP4** (`.mp4`, `.m4v`), **WebM** (`.webm`), **Ogg** (`.ogv`). Playback depends on the browser’s HTML5 `<video>` support; MP4 (H.264) and WebM are widely supported.
 - **Setup toggle** — Admin panel with collapse button `<` (angle bracket) to return to setup
 - **Hide panels** — Optionally hide world description and game details panels
@@ -52,7 +52,7 @@ cd .\\foundryVTT-login-page-customizer
 5. **Run**:
 
 ```bat
-fvtt-login-patcher.cmd
+.\fvtt-login-patcher.cmd
 ```
 
 ### Linux
