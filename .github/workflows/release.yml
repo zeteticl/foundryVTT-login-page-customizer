@@ -49,7 +49,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare distribution (same layout as repo: root launchers + src/)
+      - name: Prepare distribution
+        shell: bash
         run: |
           mkdir -p dist
           cp -r src dist/
