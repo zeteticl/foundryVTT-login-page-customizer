@@ -1,0 +1,41 @@
+# Publish release asset: contents of src/ at root (no src folder).
+# Trigger: when a release is published.
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare distribution (no src folder)
+        run: |
+          mkdir -p dist
+          cp -r src/* dist/
+          cp version.json dist/
+
+      - name: Update lastUpdated in version.json
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const p = path.join('dist', 'version.json');
+          const v = JSON.parse(fs.readFileSync(p, 'utf8'));
+          v.lastUpdated = new Date().toISOString();
+          fs.writeFileSync(p, JSON.stringify(v, null, 2) + '\n');
+          "
+
+      - name: Create zip
+        run: |
+          cd dist && zip -r ../foundryVTT-login-page-customizer.zip . && cd ..
+          echo "ZIP created: foundryVTT-login-page-customizer.zip"
+
+      - name: Upload release asset
+        run: gh release upload "${{ github.event.release.tag_name }}" foundryVTT-login-page-customizer.zip --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
