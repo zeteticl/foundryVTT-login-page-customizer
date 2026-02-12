@@ -152,7 +152,7 @@ src/
 ## 鳴謝
 
 - **xtlcme** — 原始討論與靈感來源：  
-  [女神幻想論壇 — Foundry 登入頁自訂](https://www.goddessfantasy.net/bbs/index.php?topic=126755.0)
+  [純美論壇 — 【優化】魔改動態登錄界面v2](https://www.goddessfantasy.net/bbs/index.php?topic=126755.0)
 
 ## 注意事項
 
