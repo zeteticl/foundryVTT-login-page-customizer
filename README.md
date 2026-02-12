@@ -29,17 +29,99 @@ A cross-platform Node.js CLI that patches [Foundry Virtual Tabletop](https://fou
 
 ## Install & run
 
-1. **Get the project** — [Download release zip](https://github.com/zeteticl/foundryVTT-login-page-customizer/releases) and extract, or `git clone` and `cd` into the repo. Both have the same layout (launchers at root, script in `src/`). No `npm install` needed.
-2. **Run** from that folder:
+### Windows (PowerShell 5.1)
 
-   | Platform     | Command                  |
-   | ------------ | ------------------------ |
-   | Windows      | `fvtt-login-patcher.cmd` |
-   | Linux/macOS  | `./fvtt-login-patcher.sh` |
+1. **Pick a folder** (recommended) — Use something like `C:\Games\foundry-tools\` (avoid `Program Files`).
+2. **(Optional) Open PowerShell as Administrator** — Only needed if your Foundry install is under `C:\Program Files\...` and you run into permission errors while patching.  
+   - Start Menu → type `powershell` → right-click **Windows PowerShell** → **Run as administrator**
+3. **Download the latest release zip** into that folder:
 
-   Linux/macOS: if **Permission denied**, run `chmod +x fvtt-login-patcher.sh` once, or use `node src/fvtt-login-patcher.mjs`.
+```powershell
+mkdir C:\Games\foundry-tools -Force
+cd C:\Games\foundry-tools
+Invoke-WebRequest -Uri "https://github.com/zeteticl/foundryVTT-login-page-customizer/releases/latest/download/foundryVTT-login-page-customizer.zip" -OutFile "foundryVTT-login-page-customizer.zip"
+```
 
-3. **Follow prompts** — Choose Foundry app path, **Modify** or **Restore**, then options. Backups are `*.bak.orig`; use Restore to undo.
+4. **Extract**:
+
+```powershell
+Expand-Archive -Path "foundryVTT-login-page-customizer.zip" -DestinationPath ".\\foundryVTT-login-page-customizer" -Force
+cd .\\foundryVTT-login-page-customizer
+```
+
+5. **Run**:
+
+```bat
+fvtt-login-patcher.cmd
+```
+
+### Linux
+
+1. **Pick a folder** (recommended) — e.g. `~/foundry-tools/`.
+2. **Download + extract** the latest release zip:
+
+```bash
+mkdir -p ~/foundry-tools
+cd ~/foundry-tools
+curl -L -o foundryVTT-login-page-customizer.zip \
+  https://github.com/zeteticl/foundryVTT-login-page-customizer/releases/latest/download/foundryVTT-login-page-customizer.zip
+unzip -o foundryVTT-login-page-customizer.zip -d foundryVTT-login-page-customizer
+cd foundryVTT-login-page-customizer
+```
+
+3. **(Once) Allow execution**:
+
+```bash
+chmod +x fvtt-login-patcher.sh
+```
+
+4. **Run**:
+
+```bash
+./fvtt-login-patcher.sh
+```
+
+If you still get **Permission denied**, run via Node:
+
+```bash
+node src/fvtt-login-patcher.mjs
+```
+
+### macOS
+
+1. **Pick a folder** (recommended) — e.g. `~/foundry-tools/`.
+2. **Download + extract** the latest release zip:
+
+```bash
+mkdir -p ~/foundry-tools
+cd ~/foundry-tools
+curl -L -o foundryVTT-login-page-customizer.zip \
+  https://github.com/zeteticl/foundryVTT-login-page-customizer/releases/latest/download/foundryVTT-login-page-customizer.zip
+unzip -o foundryVTT-login-page-customizer.zip -d foundryVTT-login-page-customizer
+cd foundryVTT-login-page-customizer
+```
+
+3. **(Once) Allow execution**:
+
+```bash
+chmod +x fvtt-login-patcher.sh
+```
+
+4. **Run**:
+
+```bash
+./fvtt-login-patcher.sh
+```
+
+If you still get **Permission denied**, run via Node:
+
+```bash
+node src/fvtt-login-patcher.mjs
+```
+
+### Follow prompts
+
+Choose your Foundry app path, select **Modify** or **Restore**, then options. Backups are `*.bak.orig`; use **Restore** to undo.
 
 ## Version support
 
