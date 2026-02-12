@@ -1,5 +1,7 @@
 # Foundry VTT Login Page Customizer
 
+[中文說明（繁體中文）](README-zh-TW.md)
+
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/zeteticl/foundryVTT-login-page-customizer)](https://github.com/zeteticl/foundryVTT-login-page-customizer/releases)
 [![GitHub downloads](https://img.shields.io/github/downloads/zeteticl/foundryVTT-login-page-customizer/total)](https://github.com/zeteticl/foundryVTT-login-page-customizer/releases)
 [![GitHub last commit](https://img.shields.io/github/last-commit/zeteticl/foundryVTT-login-page-customizer)](https://github.com/zeteticl/foundryVTT-login-page-customizer/commits/main)
@@ -139,7 +141,7 @@ src/
 
 ## Credits
 
-- **xtlcme** — Original idea: [純美論壇 — 【優化】魔改動態登錄界面v2](https://www.goddessfantasy.net/bbs/index.php?topic=126755.0)
+- **xtlcme** — Original idea: [純美蘋果園 — 【優化】魔改動態登錄界面v2](https://www.goddessfantasy.net/bbs/index.php?topic=126755.0)
 
 ## Disclaimer
 
