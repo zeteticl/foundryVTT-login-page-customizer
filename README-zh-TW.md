@@ -10,6 +10,8 @@
 
 一個跨平台的 Node.js 命令列工具，用來修改 [Foundry Virtual Tabletop](https://foundryvtt.com/) 的登入／設定畫面。你可以自訂登入頁的影片背景、版面配置、主 Logo、標題發光效果與字級等。
 
+如果你喜歡這個專案，可以 [請我喝杯茶 ☕](https://www.patreon.com/HKTRPG)。
+
 ## 功能
 
 - **隱藏 role 為 none 的用戶**：role 為 "none" 的用戶不會顯示在登入列表

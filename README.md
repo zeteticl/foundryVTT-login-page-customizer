@@ -12,6 +12,8 @@
 
 A cross-platform Node.js CLI that patches [Foundry Virtual Tabletop](https://foundryvtt.com/)'s login/setup page. Customize the join screen with video backgrounds, compact layout, custom logo, title styling, and more.
 
+If you like this project, you can [buy me a tea ☕](https://www.patreon.com/HKTRPG).
+
 ## Features
 
 - **Hide role-none users** — Users whose role is "none" are not shown in the join list
